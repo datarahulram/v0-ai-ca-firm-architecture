@@ -1,8 +1,9 @@
 'use client';
 
-import { useState } from 'react';
-import { Plus, Trash2, AlertCircle } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Plus, Trash2 } from 'lucide-react';
 import { analyzeFinancialData } from '@/lib/ai-service';
+import { getAppState, saveAppState } from '@/lib/app-state';
 
 interface JournalEntry {
   id: string;
@@ -18,25 +19,11 @@ interface BookkeepingPageProps {
 }
 
 export default function BookkeepingPage({ onBack }: BookkeepingPageProps) {
-  const [entries, setEntries] = useState<JournalEntry[]>([
-    {
-      id: '1',
-      date: '2024-01-15',
-      description: 'Sales Revenue',
-      account: 'Cash/Bank',
-      debit: 50000,
-      credit: 0,
-    },
-    {
-      id: '2',
-      date: '2024-01-15',
-      description: 'Sales Revenue',
-      account: 'Revenue',
-      debit: 0,
-      credit: 50000,
-    },
-  ]);
-
+  const [entries, setEntries] = useState<JournalEntry[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [analysis, setAnalysis] = useState('');
+  const [totalDebit, setTotalDebit] = useState(0);
+  const [totalCredit, setTotalCredit] = useState(0);
   const [formData, setFormData] = useState({
     date: new Date().toISOString().split('T')[0],
     description: '',
@@ -45,18 +32,21 @@ export default function BookkeepingPage({ onBack }: BookkeepingPageProps) {
     credit: '',
   });
 
-  const [loading, setLoading] = useState(false);
-  const [analysis, setAnalysis] = useState<string>('');
-  const [balance, setBalance] = useState(0);
+  useEffect(() => {
+    const state = getAppState();
+    setEntries(state.bookkeeping.entries.map((e: any, idx: number) => ({
+      id: String(idx),
+      ...e,
+    })));
+    setTotalDebit(state.bookkeeping.totalDebit);
+    setTotalCredit(state.bookkeeping.totalCredit);
+  }, []);
 
-  const calculateBalance = () => {
-    const total = entries.reduce((sum, entry) => sum + entry.debit - entry.credit, 0);
-    setBalance(total);
-  };
+  const calculateBalance = () => totalDebit - totalCredit;
 
-  const handleAddEntry = async () => {
+  const handleAddEntry = () => {
     if (!formData.description || (!formData.debit && !formData.credit)) {
-      alert('Please fill all fields');
+      alert('Please fill description and amount');
       return;
     }
 
@@ -65,11 +55,25 @@ export default function BookkeepingPage({ onBack }: BookkeepingPageProps) {
       date: formData.date,
       description: formData.description,
       account: formData.account,
-      debit: parseFloat(formData.debit) || 0,
-      credit: parseFloat(formData.credit) || 0,
+      debit: parseFloat(formData.debit || '0'),
+      credit: parseFloat(formData.credit || '0'),
     };
 
-    setEntries([...entries, newEntry]);
+    const newEntries = [...entries, newEntry];
+    const newDebit = totalDebit + newEntry.debit;
+    const newCredit = totalCredit + newEntry.credit;
+
+    setEntries(newEntries);
+    setTotalDebit(newDebit);
+    setTotalCredit(newCredit);
+
+    const state = getAppState();
+    state.bookkeeping.entries = newEntries;
+    state.bookkeeping.totalDebit = newDebit;
+    state.bookkeeping.totalCredit = newCredit;
+    state.bookkeeping.balance = calculateBalance();
+    saveAppState(state);
+
     setFormData({
       date: new Date().toISOString().split('T')[0],
       description: '',
@@ -80,183 +84,185 @@ export default function BookkeepingPage({ onBack }: BookkeepingPageProps) {
   };
 
   const handleDeleteEntry = (id: string) => {
-    setEntries(entries.filter((e) => e.id !== id));
+    const entry = entries.find(e => e.id === id);
+    if (!entry) return;
+
+    const newEntries = entries.filter(e => e.id !== id);
+    const newDebit = totalDebit - entry.debit;
+    const newCredit = totalCredit - entry.credit;
+
+    setEntries(newEntries);
+    setTotalDebit(newDebit);
+    setTotalCredit(newCredit);
+
+    const state = getAppState();
+    state.bookkeeping.entries = newEntries;
+    state.bookkeeping.totalDebit = newDebit;
+    state.bookkeeping.totalCredit = newCredit;
+    saveAppState(state);
   };
 
   const handleAnalyze = async () => {
+    if (entries.length === 0) {
+      alert('Add entries first');
+      return;
+    }
     setLoading(true);
     try {
-      const response = await analyzeFinancialData({
+      const result = await analyzeFinancialData({
         type: 'bookkeeping',
-        data: { entries, balance },
-        query: 'Validate journal entries and suggest improvements',
+        data: { entries, totalDebit, totalCredit },
+        query: 'Check for double-entry errors and compliance',
       });
-      setAnalysis(response.analysis);
-      calculateBalance();
+      setAnalysis(result.analysis);
     } catch (error) {
-      console.error('Analysis failed:', error);
-      setAnalysis('Analysis service temporarily unavailable. Displaying standard validation.');
+      console.error('[v0] Analysis failed:', error);
+      setAnalysis('Analysis service unavailable');
     } finally {
       setLoading(false);
     }
   };
 
-  const totalDebits = entries.reduce((sum, e) => sum + e.debit, 0);
-  const totalCredits = entries.reduce((sum, e) => sum + e.credit, 0);
-  const isBalanced = Math.abs(totalDebits - totalCredits) < 0.01;
-
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-light tracking-tight">Bookkeeping</h2>
-          <p className="text-muted-foreground text-sm mt-1">General Ledger & Journal Entries</p>
+          <h2 className="text-2xl font-light">Bookkeeping</h2>
+          <p className="text-muted-foreground text-sm mt-1">Journal Entries & Trial Balance</p>
         </div>
-        <button
-          onClick={onBack}
-          className="px-4 py-2 text-sm hover:bg-muted rounded-lg transition-colors"
-        >
+        <button onClick={onBack} className="px-4 py-2 text-sm hover:bg-muted rounded-lg">
           Back
         </button>
       </div>
 
-      {/* Add Entry Form */}
-      <div className="p-6 border border-border rounded-lg bg-card">
-        <h3 className="font-semibold mb-4">Add Journal Entry</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-3">
-          <input
-            type="date"
-            value={formData.date}
-            onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-            className="px-3 py-2 border border-border rounded-lg text-sm bg-background"
-          />
-          <input
-            type="text"
-            placeholder="Description"
-            value={formData.description}
-            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-            className="px-3 py-2 border border-border rounded-lg text-sm bg-background"
-          />
-          <select
-            value={formData.account}
-            onChange={(e) => setFormData({ ...formData, account: e.target.value })}
-            className="px-3 py-2 border border-border rounded-lg text-sm bg-background"
-          >
-            <option>Cash</option>
-            <option>Revenue</option>
-            <option>Expense</option>
-            <option>Liability</option>
-            <option>Asset</option>
-          </select>
-          <input
-            type="number"
-            placeholder="Debit"
-            value={formData.debit}
-            onChange={(e) => setFormData({ ...formData, debit: e.target.value })}
-            className="px-3 py-2 border border-border rounded-lg text-sm bg-background"
-          />
-          <input
-            type="number"
-            placeholder="Credit"
-            value={formData.credit}
-            onChange={(e) => setFormData({ ...formData, credit: e.target.value })}
-            className="px-3 py-2 border border-border rounded-lg text-sm bg-background"
-          />
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2 p-6 border border-border rounded-lg bg-card space-y-4">
+          <h3 className="font-semibold">Add Journal Entry</h3>
+          <div className="grid grid-cols-2 gap-4">
+            <input
+              type="date"
+              value={formData.date}
+              onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+              className="col-span-2 px-3 py-2 border border-border rounded-lg bg-background"
+            />
+            <input
+              placeholder="Description"
+              value={formData.description}
+              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              className="col-span-2 px-3 py-2 border border-border rounded-lg bg-background"
+            />
+            <select
+              value={formData.account}
+              onChange={(e) => setFormData({ ...formData, account: e.target.value })}
+              className="px-3 py-2 border border-border rounded-lg bg-background"
+            >
+              <option>Cash</option>
+              <option>Bank</option>
+              <option>Revenue</option>
+              <option>Expenses</option>
+            </select>
+            <div className="flex gap-2">
+              <input
+                type="number"
+                placeholder="Debit"
+                value={formData.debit}
+                onChange={(e) => setFormData({ ...formData, debit: e.target.value, credit: '' })}
+                className="flex-1 px-3 py-2 border border-border rounded-lg bg-background"
+              />
+              <input
+                type="number"
+                placeholder="Credit"
+                value={formData.credit}
+                onChange={(e) => setFormData({ ...formData, credit: e.target.value, debit: '' })}
+                className="flex-1 px-3 py-2 border border-border rounded-lg bg-background"
+              />
+            </div>
+          </div>
           <button
             onClick={handleAddEntry}
-            className="px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:opacity-90 transition-opacity flex items-center gap-2 justify-center"
+            className="w-full bg-primary text-primary-foreground py-2 rounded-lg hover:opacity-90 flex items-center justify-center gap-2"
           >
             <Plus className="w-4 h-4" />
-            Add
+            Add Entry
           </button>
         </div>
-      </div>
 
-      {/* Journal Entries */}
-      <div className="p-6 border border-border rounded-lg bg-card overflow-x-auto">
-        <h3 className="font-semibold mb-4">Journal Entries</h3>
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-border">
-              <th className="text-left py-2 px-2 font-medium">Date</th>
-              <th className="text-left py-2 px-2 font-medium">Description</th>
-              <th className="text-left py-2 px-2 font-medium">Account</th>
-              <th className="text-right py-2 px-2 font-medium">Debit</th>
-              <th className="text-right py-2 px-2 font-medium">Credit</th>
-              <th className="text-center py-2 px-2 font-medium">Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {entries.map((entry) => (
-              <tr key={entry.id} className="border-b border-border hover:bg-muted/50">
-                <td className="py-3 px-2">{entry.date}</td>
-                <td className="py-3 px-2">{entry.description}</td>
-                <td className="py-3 px-2 text-xs">{entry.account}</td>
-                <td className="py-3 px-2 text-right">
-                  {entry.debit > 0 ? `₹${entry.debit.toFixed(2)}` : '-'}
-                </td>
-                <td className="py-3 px-2 text-right">
-                  {entry.credit > 0 ? `₹${entry.credit.toFixed(2)}` : '-'}
-                </td>
-                <td className="py-3 px-2 text-center">
-                  <button
-                    onClick={() => handleDeleteEntry(entry.id)}
-                    className="text-red-600 hover:text-red-700 transition-colors"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-
-      {/* Trial Balance */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="p-6 border border-border rounded-lg bg-card">
-          <p className="text-sm text-muted-foreground font-medium">Total Debits</p>
-          <p className="text-2xl font-light mt-2">₹{totalDebits.toFixed(2)}</p>
-        </div>
-        <div className="p-6 border border-border rounded-lg bg-card">
-          <p className="text-sm text-muted-foreground font-medium">Total Credits</p>
-          <p className="text-2xl font-light mt-2">₹{totalCredits.toFixed(2)}</p>
-        </div>
-        <div
-          className={`p-6 border rounded-lg ${
-            isBalanced
-              ? 'border-green-200 bg-green-50/50'
-              : 'border-red-200 bg-red-50/50'
-          }`}
-        >
-          <p className="text-sm font-medium">Status</p>
-          <p className={`text-2xl font-light mt-2 ${isBalanced ? 'text-green-600' : 'text-red-600'}`}>
-            {isBalanced ? 'Balanced' : 'Unbalanced'}
-          </p>
-        </div>
-      </div>
-
-      {/* AI Analysis */}
-      <div className="p-6 border border-border rounded-lg bg-card">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="font-semibold">AI Analysis</h3>
+        <div className="p-6 border border-border rounded-lg bg-card space-y-4">
+          <h3 className="font-semibold">Trial Balance</h3>
+          <div className="space-y-2 text-sm">
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Total Debit:</span>
+              <span className="font-medium">₹{totalDebit.toLocaleString()}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Total Credit:</span>
+              <span className="font-medium">₹{totalCredit.toLocaleString()}</span>
+            </div>
+            <div className="border-t border-border pt-2">
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Balance:</span>
+                <span className={`font-semibold ${calculateBalance() === 0 ? 'text-green-600' : 'text-red-600'}`}>
+                  ₹{calculateBalance().toLocaleString()}
+                </span>
+              </div>
+            </div>
+            <p className="text-xs text-muted-foreground pt-2">
+              {calculateBalance() === 0 ? '✓ Balanced' : '⚠ Unbalanced - Check entries'}
+            </p>
+          </div>
           <button
             onClick={handleAnalyze}
             disabled={loading}
-            className="px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:opacity-90 disabled:opacity-50 transition-opacity"
+            className="w-full bg-secondary text-secondary-foreground py-2 rounded-lg hover:opacity-90 disabled:opacity-50 text-sm font-medium"
           >
-            {loading ? 'Analyzing...' : 'Analyze'}
+            {loading ? 'Analyzing...' : 'AI Analysis'}
           </button>
         </div>
-        {analysis && (
-          <div className="space-y-3">
-            <div className="flex gap-3 p-4 bg-blue-50/50 border border-blue-200 rounded-lg">
-              <AlertCircle className="w-4 h-4 text-blue-600 flex-shrink-0 mt-0.5" />
-              <p className="text-sm text-blue-900">{analysis}</p>
-            </div>
-          </div>
-        )}
       </div>
+
+      {entries.length > 0 && (
+        <div className="p-6 border border-border rounded-lg bg-card overflow-x-auto">
+          <h3 className="font-semibold mb-4">Journal Entries ({entries.length})</h3>
+          <table className="w-full text-sm">
+            <thead className="border-b border-border">
+              <tr className="text-left text-muted-foreground">
+                <th className="pb-2">Date</th>
+                <th className="pb-2">Description</th>
+                <th className="pb-2">Account</th>
+                <th className="pb-2 text-right">Debit</th>
+                <th className="pb-2 text-right">Credit</th>
+                <th className="pb-2"></th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border">
+              {entries.map((entry) => (
+                <tr key={entry.id}>
+                  <td className="py-3">{entry.date}</td>
+                  <td className="py-3">{entry.description}</td>
+                  <td className="py-3 text-muted-foreground text-xs">{entry.account}</td>
+                  <td className="py-3 text-right">{entry.debit > 0 ? `₹${entry.debit.toLocaleString()}` : '-'}</td>
+                  <td className="py-3 text-right">{entry.credit > 0 ? `₹${entry.credit.toLocaleString()}` : '-'}</td>
+                  <td className="py-3 text-right">
+                    <button
+                      onClick={() => handleDeleteEntry(entry.id)}
+                      className="text-red-600 hover:text-red-700"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {analysis && (
+        <div className="p-6 border border-border rounded-lg bg-card space-y-2">
+          <h3 className="font-semibold">AI Analysis</h3>
+          <p className="text-sm text-foreground">{analysis}</p>
+        </div>
+      )}
     </div>
   );
 }

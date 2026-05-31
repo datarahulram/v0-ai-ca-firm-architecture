@@ -1,7 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { analyzeFinancialData } from '@/lib/ai-service';
+import { getAppState, saveAppState } from '@/lib/app-state';
 
 interface TaxPageProps {
   onBack: () => void;
@@ -9,42 +10,80 @@ interface TaxPageProps {
 
 export default function TaxPage({ onBack }: TaxPageProps) {
   const [formData, setFormData] = useState({
-    grossIncome: '1420000',
-    deductions: '320000',
-    gstSales: '500000',
-    gstPurchases: '150000',
-    tdsCollected: '28450',
+    grossIncome: '',
+    deductions: '',
+    gstSales: '',
+    gstPurchases: '',
+    tdsCollected: '',
   });
 
   const [results, setResults] = useState<any>(null);
   const [loading, setLoading] = useState(false);
 
+  // Load real data from global state on mount
+  useEffect(() => {
+    const state = getAppState();
+    if (state.tax.grossIncome > 0) {
+      setFormData({
+        grossIncome: String(state.tax.grossIncome),
+        deductions: String(state.tax.deductions),
+        gstSales: String(state.tax.gstCollected),
+        gstPurchases: String(state.tax.gstPaid),
+        tdsCollected: String(state.tax.tdsAmount),
+      });
+    }
+  }, []);
+
   const calculateTax = async () => {
+    if (!formData.grossIncome) {
+      alert('Please enter gross income');
+      return;
+    }
+
     setLoading(true);
     try {
+      const grossIncome = parseFloat(formData.grossIncome) || 0;
+      const deductions = parseFloat(formData.deductions) || 0;
+      const gstSales = parseFloat(formData.gstSales) || 0;
+      const gstPurchases = parseFloat(formData.gstPurchases) || 0;
+      const tdsCollected = parseFloat(formData.tdsCollected) || 0;
+
+      const taxableIncome = Math.max(0, grossIncome - deductions);
+      const incomeTax = taxableIncome * 0.30;
+      const gstLiability = Math.max(0, (gstSales - gstPurchases) * 0.18);
+      const netTaxDue = Math.max(0, incomeTax + gstLiability - tdsCollected);
+
       const response = await analyzeFinancialData({
         type: 'tax',
-        data: formData,
-        query: 'Calculate tax liability including income tax, GST, and TDS implications',
+        data: { grossIncome, deductions, taxableIncome, incomeTax, gstLiability, tdsCollected },
+        query: 'Provide tax optimization recommendations',
       });
-      
-      const grossIncome = parseFloat(formData.grossIncome);
-      const deductions = parseFloat(formData.deductions);
-      const taxableIncome = grossIncome - deductions;
-      const incomeTax = taxableIncome * 0.30;
-      const gstLiability = (parseFloat(formData.gstSales) - parseFloat(formData.gstPurchases)) * 0.18;
-      
+
+      // Save to global state
+      const state = getAppState();
+      state.tax = {
+        grossIncome,
+        deductions,
+        taxableIncome,
+        taxLiability: netTaxDue,
+        gstCollected: gstSales,
+        gstPaid: gstPurchases,
+        netGST: gstLiability,
+        tdsAmount: tdsCollected,
+      };
+      saveAppState(state);
+
       setResults({
         taxableIncome,
-        incomeTax,
-        gstLiability,
-        tdsAdjustment: parseFloat(formData.tdsCollected),
-        netTaxDue: Math.max(0, incomeTax + gstLiability - parseFloat(formData.tdsCollected)),
+        incomeTax: incomeTax.toFixed(2),
+        gstLiability: gstLiability.toFixed(2),
+        tdsAdjustment: tdsCollected,
+        netTaxDue: netTaxDue.toFixed(2),
         aiAnalysis: response.analysis,
         recommendations: response.recommendations,
       });
     } catch (error) {
-      console.error('Tax calculation failed:', error);
+      console.error('[v0] Tax calculation failed:', error);
       setResults({ error: 'Calculation service unavailable' });
     } finally {
       setLoading(false);

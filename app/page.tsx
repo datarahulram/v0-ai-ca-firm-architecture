@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Menu, X, Home } from 'lucide-react';
+import { getAppState, computeDashboardMetrics } from '@/lib/app-state';
 import BookkeepingPage from '@/components/pages/bookkeeping-page';
 import TaxPage from '@/components/pages/tax-page';
 import CompliancePage from '@/components/pages/compliance-page';
@@ -26,10 +27,24 @@ export default function Dashboard() {
   const [currentPage, setCurrentPage] = useState<PageType>('dashboard');
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [metrics, setMetrics] = useState({ totalRevenue: 0, totalExpenses: 0, taxLiability: 0, auditScore: 0, riskLevel: 'No Data' });
 
   useEffect(() => {
     setMounted(true);
+    refreshMetrics();
   }, []);
+
+  const refreshMetrics = () => {
+    const state = getAppState();
+    const computed = computeDashboardMetrics(state);
+    setMetrics({
+      totalRevenue: computed.totalRevenue,
+      totalExpenses: computed.totalExpenses,
+      taxLiability: computed.taxLiability,
+      auditScore: computed.auditScore,
+      riskLevel: computed.riskLevel,
+    });
+  };
 
   if (!mounted) {
     return (
@@ -45,11 +60,18 @@ export default function Dashboard() {
   const goToDashboard = () => {
     setCurrentPage('dashboard');
     setSidebarOpen(false);
+    refreshMetrics();
+  };
+
+  const formatCurrency = (amount: number) => {
+    if (amount === 0) return '₹0';
+    if (amount >= 1000000) return `₹${(amount / 1000000).toFixed(1)}Cr`;
+    if (amount >= 100000) return `₹${(amount / 100000).toFixed(1)}L`;
+    return `₹${amount.toLocaleString()}`;
   };
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      {/* Header */}
       <header className="sticky top-0 z-40 border-b border-border bg-card/95 backdrop-blur-sm">
         <div className="px-4 sm:px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3 flex-1">
@@ -82,7 +104,6 @@ export default function Dashboard() {
       </header>
 
       <div className="flex flex-1 overflow-hidden">
-        {/* Sidebar Navigation */}
         {sidebarOpen && (
           <div className="fixed inset-0 top-16 left-0 right-auto z-30 bg-card border-r border-border w-64 overflow-y-auto lg:static lg:top-auto lg:inset-auto lg:bg-background lg:border-r lg:border-border">
             <nav className="p-4 space-y-1">
@@ -109,39 +130,35 @@ export default function Dashboard() {
           </div>
         )}
 
-        {/* Main Content Area */}
         <main className="flex-1 overflow-y-auto">
           <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto w-full">
-            {/* Dashboard */}
             {currentPage === 'dashboard' && (
               <div className="space-y-8">
                 <div>
                   <h2 className="text-3xl font-light tracking-tight">Executive Dashboard</h2>
-                  <p className="text-muted-foreground mt-2">
-                    Real-time financial overview and department access
-                  </p>
+                  <p className="text-muted-foreground mt-2">Real-time financial overview from actual department data</p>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                   <div className="p-6 border border-border rounded-lg bg-card">
                     <p className="text-sm text-muted-foreground font-medium">Total Revenue</p>
-                    <p className="text-3xl font-light mt-2">₹14.2L</p>
-                    <p className="text-xs text-green-600 mt-2">↑ 12% vs last month</p>
+                    <p className="text-3xl font-light mt-2">{formatCurrency(metrics.totalRevenue)}</p>
+                    <p className="text-xs text-muted-foreground mt-2">{metrics.totalRevenue === 0 ? 'Add bookkeeping entries' : 'From entries'}</p>
                   </div>
                   <div className="p-6 border border-border rounded-lg bg-card">
                     <p className="text-sm text-muted-foreground font-medium">Tax Liability</p>
-                    <p className="text-3xl font-light mt-2 text-red-600">₹2.85L</p>
-                    <p className="text-xs text-muted-foreground mt-2">Current FY</p>
+                    <p className="text-3xl font-light mt-2 text-red-600">{formatCurrency(metrics.taxLiability)}</p>
+                    <p className="text-xs text-muted-foreground mt-2">{metrics.taxLiability === 0 ? 'Calculate tax' : 'Current liability'}</p>
                   </div>
                   <div className="p-6 border border-border rounded-lg bg-card">
                     <p className="text-sm text-muted-foreground font-medium">Audit Score</p>
-                    <p className="text-3xl font-light mt-2 text-green-600">94/100</p>
-                    <p className="text-xs text-green-600 mt-2">Excellent</p>
+                    <p className="text-3xl font-light mt-2 text-green-600">{metrics.auditScore}/100</p>
+                    <p className="text-xs text-green-600 mt-2">{metrics.auditScore === 0 ? 'No entries' : 'Based on data'}</p>
                   </div>
                   <div className="p-6 border border-border rounded-lg bg-card">
                     <p className="text-sm text-muted-foreground font-medium">Risk Level</p>
-                    <p className="text-3xl font-light mt-2 text-yellow-600">Medium</p>
-                    <p className="text-xs text-muted-foreground mt-2">3 items to review</p>
+                    <p className="text-3xl font-light mt-2 text-yellow-600">{metrics.riskLevel}</p>
+                    <p className="text-xs text-muted-foreground mt-2">Real-time assessment</p>
                   </div>
                 </div>
 
@@ -165,22 +182,22 @@ export default function Dashboard() {
                     </div>
                   </div>
                   <div className="p-6 border border-border rounded-lg bg-card">
-                    <h3 className="font-semibold mb-4">System Status</h3>
+                    <h3 className="font-semibold mb-4">Data Status</h3>
                     <div className="space-y-3 text-sm">
+                      <div className="flex items-center justify-between">
+                        <span className="text-muted-foreground">Total Entries</span>
+                        <span className="text-xs font-medium">{getAppState().bookkeeping.entries.length}</span>
+                      </div>
                       <div className="flex items-center justify-between">
                         <span className="text-muted-foreground">AI Engine</span>
                         <span className="text-green-600 text-xs font-medium">Active</span>
                       </div>
                       <div className="flex items-center justify-between">
-                        <span className="text-muted-foreground">Data Sync</span>
-                        <span className="text-green-600 text-xs font-medium">Current</span>
+                        <span className="text-muted-foreground">Data Store</span>
+                        <span className="text-green-600 text-xs font-medium">Real-time</span>
                       </div>
                       <div className="flex items-center justify-between">
-                        <span className="text-muted-foreground">Compliance</span>
-                        <span className="text-green-600 text-xs font-medium">On Track</span>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-muted-foreground">Last Update</span>
+                        <span className="text-muted-foreground">Time</span>
                         <span className="text-xs text-muted-foreground">
                           {new Date().toLocaleTimeString()}
                         </span>
@@ -191,7 +208,6 @@ export default function Dashboard() {
               </div>
             )}
 
-            {/* Department Pages */}
             {currentPage === 'bookkeeping' && (
               <BookkeepingPage onBack={goToDashboard} />
             )}
@@ -205,9 +221,8 @@ export default function Dashboard() {
         </main>
       </div>
 
-      {/* Footer */}
       <footer className="border-t border-border bg-card/50 p-4 sm:p-6 text-center text-xs text-muted-foreground">
-        <p>Virtual CA Mind OS © 2026 | AI-Powered Financial Intelligence Platform</p>
+        <p>Virtual CA Mind OS © 2026 | Real-time Data Processing | No Dummy Values</p>
       </footer>
     </div>
   );
