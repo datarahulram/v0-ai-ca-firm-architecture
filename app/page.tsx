@@ -14,6 +14,9 @@ import { AIConsultation } from '@/components/ai-consultation';
 import { BookkeepingDepartment } from '@/components/bookkeeping-department';
 import { ComplianceDepartment } from '@/components/compliance-department';
 import { AuditDepartment } from '@/components/audit-department';
+import { TaxDepartment } from '@/components/tax-department';
+import { RiskAnalyticsDepartment } from '@/components/risk-analytics-department';
+import { ForecastCFODepartment } from '@/components/forecast-cfo-department';
 import { FinancialMetrics, DocumentAnalysis, MultiEngineReport } from '@/lib/types';
 import { Menu, X, FileText, DollarSign, CheckCircle2, AlertCircle, TrendingUp, Brain, Zap, BookOpen } from 'lucide-react';
 
@@ -144,40 +147,7 @@ export default function Dashboard() {
                 <h2 className="text-3xl font-light tracking-tight mb-2">Tax Planning & Strategy</h2>
                 <p className="text-muted-foreground">GST, Income Tax, TDS calculations and filings</p>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <div className="p-6 border border-border rounded-lg bg-card">
-                  <p className="text-sm font-semibold text-muted-foreground mb-2">GST Liability</p>
-                  <p className="text-2xl font-light">₹45,230</p>
-                  <p className="text-xs text-primary mt-2">↑ 12% vs last month</p>
-                </div>
-                <div className="p-6 border border-border rounded-lg bg-card">
-                  <p className="text-sm font-semibold text-muted-foreground mb-2">Tax Position</p>
-                  <p className="text-2xl font-light">₹3,82,100</p>
-                  <p className="text-xs text-muted-foreground mt-2">Current financial year</p>
-                </div>
-                <div className="p-6 border border-border rounded-lg bg-card">
-                  <p className="text-sm font-semibold text-muted-foreground mb-2">TDS Collected</p>
-                  <p className="text-2xl font-light">₹28,450</p>
-                  <p className="text-xs text-muted-foreground mt-2">Amount pending</p>
-                </div>
-              </div>
-              <div className="p-6 border border-border rounded-lg bg-card">
-                <h3 className="font-semibold mb-4">Tax Recommendations</h3>
-                <ul className="space-y-3 text-sm">
-                  <li className="flex items-start gap-3">
-                    <span className="text-primary font-bold">•</span>
-                    <span>Review GST returns for potential input credits optimization</span>
-                  </li>
-                  <li className="flex items-start gap-3">
-                    <span className="text-primary font-bold">•</span>
-                    <span>Consider TDS provisions before year-end to minimize liabilities</span>
-                  </li>
-                  <li className="flex items-start gap-3">
-                    <span className="text-primary font-bold">•</span>
-                    <span>Implement income splitting strategy for better tax efficiency</span>
-                  </li>
-                </ul>
-              </div>
+              <TaxDepartment />
             </div>
           )}
 
@@ -207,38 +177,7 @@ export default function Dashboard() {
                 <h2 className="text-3xl font-light tracking-tight mb-2">Risk Analysis</h2>
                 <p className="text-muted-foreground">Comprehensive risk assessment across all operations</p>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <div className="p-6 border border-border rounded-lg bg-card">
-                  <p className="text-sm font-semibold text-muted-foreground mb-2">Cash Risk</p>
-                  <p className="text-2xl font-light text-yellow-600">Medium</p>
-                  <p className="text-xs text-muted-foreground mt-2">Days cash on hand: 45</p>
-                </div>
-                <div className="p-6 border border-border rounded-lg bg-card">
-                  <p className="text-sm font-semibold text-muted-foreground mb-2">Tax Risk</p>
-                  <p className="text-2xl font-light text-green-600">Low</p>
-                  <p className="text-xs text-muted-foreground mt-2">Compliance score: 95%</p>
-                </div>
-                <div className="p-6 border border-border rounded-lg bg-card">
-                  <p className="text-sm font-semibold text-muted-foreground mb-2">Vendor Risk</p>
-                  <p className="text-2xl font-light text-yellow-600">Medium</p>
-                  <p className="text-xs text-muted-foreground mt-2">3 vendors at risk</p>
-                </div>
-                <div className="p-6 border border-border rounded-lg bg-card">
-                  <p className="text-sm font-semibold text-muted-foreground mb-2">Customer Risk</p>
-                  <p className="text-2xl font-light text-yellow-600">Medium</p>
-                  <p className="text-xs text-muted-foreground mt-2">₹12L overdue</p>
-                </div>
-                <div className="p-6 border border-border rounded-lg bg-card">
-                  <p className="text-sm font-semibold text-muted-foreground mb-2">Compliance Risk</p>
-                  <p className="text-2xl font-light text-green-600">Low</p>
-                  <p className="text-xs text-muted-foreground mt-2">All deadlines met</p>
-                </div>
-                <div className="p-6 border border-border rounded-lg bg-card">
-                  <p className="text-sm font-semibold text-muted-foreground mb-2">Overall Risk</p>
-                  <p className="text-2xl font-light">Medium</p>
-                  <p className="text-xs text-muted-foreground mt-2">Action needed: 3</p>
-                </div>
-              </div>
+              <RiskAnalyticsDepartment />
             </div>
           )}
 
@@ -248,27 +187,7 @@ export default function Dashboard() {
                 <h2 className="text-3xl font-light tracking-tight mb-2">Forecasting & Scenarios</h2>
                 <p className="text-muted-foreground">Revenue, cash flow, and growth projections</p>
               </div>
-              <GrowthCard data={metrics.growth} />
-              <div className="p-6 border border-border rounded-lg bg-card">
-                <h3 className="font-semibold mb-4">30/90/180 Day Forecast</h3>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground mb-2">Next 30 Days</p>
-                    <p className="text-xl font-light">₹28.5L</p>
-                    <p className="text-xs text-green-600 mt-1">↑ 8% confidence</p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground mb-2">Next 90 Days</p>
-                    <p className="text-xl font-light">₹92.3L</p>
-                    <p className="text-xs text-green-600 mt-1">↑ 6% confidence</p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground mb-2">Next 180 Days</p>
-                    <p className="text-xl font-light">₹2.1Cr</p>
-                    <p className="text-xs text-yellow-600 mt-1">↑ 4% confidence</p>
-                  </div>
-                </div>
-              </div>
+              <ForecastCFODepartment />
             </div>
           )}
 
@@ -278,54 +197,7 @@ export default function Dashboard() {
                 <h2 className="text-3xl font-light tracking-tight mb-2">CFO Intelligence & Decisions</h2>
                 <p className="text-muted-foreground">Strategic business decision recommendations</p>
               </div>
-              <div className="space-y-6">
-                <div className="p-6 border border-border rounded-lg bg-card">
-                  <div className="flex items-start justify-between mb-4">
-                    <div>
-                      <h3 className="font-semibold">Can I hire 5 employees?</h3>
-                      <p className="text-sm text-muted-foreground mt-1">₹25L annual cost</p>
-                    </div>
-                    <span className="px-3 py-1 bg-green-100 text-green-700 rounded font-semibold text-sm">Recommended</span>
-                  </div>
-                  <div className="mt-4 space-y-3">
-                    <div>
-                      <p className="text-sm font-medium text-muted-foreground">Confidence Score</p>
-                      <p className="text-2xl font-light text-primary">87%</p>
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-muted-foreground mb-2">Reasoning</p>
-                      <ul className="text-sm space-y-1">
-                        <li>✓ Cash reserves sufficient for next 12 months</li>
-                        <li>✓ Revenue growth supporting expansion</li>
-                        <li>✓ Operational capacity requires additional headcount</li>
-                      </ul>
-                    </div>
-                  </div>
-                </div>
-                <div className="p-6 border border-border rounded-lg bg-card">
-                  <div className="flex items-start justify-between mb-4">
-                    <div>
-                      <h3 className="font-semibold">Should I apply for working capital loan?</h3>
-                      <p className="text-sm text-muted-foreground mt-1">₹1Cr facility</p>
-                    </div>
-                    <span className="px-3 py-1 bg-yellow-100 text-yellow-700 rounded font-semibold text-sm">Consider</span>
-                  </div>
-                  <div className="mt-4 space-y-3">
-                    <div>
-                      <p className="text-sm font-medium text-muted-foreground">Confidence Score</p>
-                      <p className="text-2xl font-light text-primary">72%</p>
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-muted-foreground mb-2">Conditions</p>
-                      <ul className="text-sm space-y-1">
-                        <li>⚠ High debt-to-equity ratio may impact approval</li>
-                        <li>✓ Strong revenue trajectory supports repayment</li>
-                        <li>✓ Improved cash management needed</li>
-                      </ul>
-                    </div>
-                  </div>
-                </div>
-              </div>
+              <ForecastCFODepartment />
             </div>
           )}
 
