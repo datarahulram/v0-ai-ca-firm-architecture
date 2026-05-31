@@ -11,14 +11,17 @@ import { MultiEnginePanel } from '@/components/multi-engine-panel';
 import { DocumentIntake } from '@/components/document-intake';
 import { ReportingPanel } from '@/components/reporting-panel';
 import { AIConsultation } from '@/components/ai-consultation';
+import { BookkeepingDepartment } from '@/components/bookkeeping-department';
+import { ComplianceDepartment } from '@/components/compliance-department';
+import { AuditDepartment } from '@/components/audit-department';
 import { FinancialMetrics, DocumentAnalysis, MultiEngineReport } from '@/lib/types';
-import { Menu, X } from 'lucide-react';
+import { Menu, X, FileText, DollarSign, CheckCircle2, AlertCircle, TrendingUp, Brain, Zap, BookOpen } from 'lucide-react';
 
 export default function Dashboard() {
   const [metrics, setMetrics] = useState<FinancialMetrics | null>(null);
   const [documents, setDocuments] = useState<DocumentAnalysis[]>([]);
   const [report, setReport] = useState<MultiEngineReport | null>(null);
-  const [activeTab, setActiveTab] = useState<'overview' | 'documents' | 'engines' | 'reporting' | 'consultation'>('overview');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'bookkeeping' | 'tax' | 'compliance' | 'audit' | 'risk' | 'forecast' | 'cfo' | 'advisory'>('dashboard');
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
   useEffect(() => {
@@ -26,6 +29,18 @@ export default function Dashboard() {
     setDocuments(generateMockDocuments());
     setReport(generateMockEngineAnalysis());
   }, []);
+
+  const departments = [
+    { id: 'dashboard', label: 'Executive Dashboard', icon: Brain },
+    { id: 'bookkeeping', label: 'Bookkeeping', icon: BookOpen },
+    { id: 'tax', label: 'Tax Planning', icon: DollarSign },
+    { id: 'compliance', label: 'Compliance', icon: CheckCircle2 },
+    { id: 'audit', label: 'Audit', icon: AlertCircle },
+    { id: 'risk', label: 'Risk Analysis', icon: TrendingUp },
+    { id: 'forecast', label: 'Forecasting', icon: Zap },
+    { id: 'cfo', label: 'CFO Decisions', icon: Brain },
+    { id: 'advisory', label: 'Advisory', icon: FileText },
+  ];
 
   if (!metrics || !report) {
     return (
@@ -40,7 +55,6 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
       <header className="sticky top-0 z-40 border-b border-border bg-card/95 backdrop-blur-sm">
         <div className="px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -51,8 +65,8 @@ export default function Dashboard() {
               {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
             </button>
             <div>
-              <h1 className="text-2xl font-light tracking-tight">Virtual CA</h1>
-              <p className="text-xs text-muted-foreground">AI Chartered Accountant Platform</p>
+              <h1 className="text-2xl font-light tracking-tight">Virtual CA Mind OS</h1>
+              <p className="text-xs text-muted-foreground">AI Chartered Accountant Firm</p>
             </div>
           </div>
           <div className="flex items-center gap-4">
@@ -65,103 +79,261 @@ export default function Dashboard() {
       </header>
 
       <div className="flex">
-        {/* Sidebar Navigation */}
         {sidebarOpen && (
-          <div className="fixed inset-0 top-16 left-0 right-auto z-30 bg-card border-r border-border p-4 w-48 lg:static lg:inset-auto lg:top-auto lg:bg-transparent lg:border-r lg:border-border">
-            <nav className="space-y-2">
-              {[
-                { id: 'overview', label: 'Dashboard Overview' },
-                { id: 'documents', label: 'Document Intake' },
-                { id: 'engines', label: 'Multi-Engine Analysis' },
-                { id: 'reporting', label: 'Reports & Export' },
-                { id: 'consultation', label: 'AI Consultation' },
-              ].map((item) => (
-                <button
-                  key={item.id}
-                  onClick={() => {
-                    setActiveTab(item.id as any);
-                    setSidebarOpen(false);
-                  }}
-                  className={`w-full text-left px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                    activeTab === item.id
-                      ? 'bg-primary text-primary-foreground'
-                      : 'text-foreground hover:bg-muted'
-                  }`}
-                >
-                  {item.label}
-                </button>
-              ))}
-            </nav>
+          <div className="fixed inset-0 top-16 left-0 right-auto z-30 bg-card border-r border-border p-4 w-56 lg:static lg:inset-auto lg:top-auto lg:bg-background lg:border-r lg:border-border overflow-y-auto max-h-[calc(100vh-64px)]">
+            <div className="mb-6">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-4">Departments</p>
+              <nav className="space-y-2">
+                {departments.map((dept) => {
+                  const Icon = dept.icon;
+                  return (
+                    <button
+                      key={dept.id}
+                      onClick={() => {
+                        setActiveTab(dept.id as any);
+                        setSidebarOpen(false);
+                      }}
+                      className={`w-full flex items-center gap-3 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                        activeTab === dept.id
+                          ? 'bg-primary text-primary-foreground'
+                          : 'text-foreground hover:bg-muted'
+                      }`}
+                    >
+                      <Icon className="w-4 h-4 flex-shrink-0" />
+                      <span>{dept.label}</span>
+                    </button>
+                  );
+                })}
+              </nav>
+            </div>
           </div>
         )}
 
-        {/* Main Content */}
         <main className="flex-1 p-6 lg:p-8 max-w-7xl">
-          {/* Overview Tab */}
-          {activeTab === 'overview' && (
+          {activeTab === 'dashboard' && (
             <div className="space-y-8">
-              {/* Main Metrics Grid - Golden Ratio Layout */}
+              <div>
+                <h2 className="text-3xl font-light tracking-tight mb-2">Executive Dashboard</h2>
+                <p className="text-muted-foreground">Real-time financial overview across all departments</p>
+              </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <MoneyCard data={metrics.money} />
                 <TasksCard data={metrics.tasks} />
               </div>
-
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <ProblemsCard data={metrics.problems} />
                 <AdviceCard data={metrics.advice} />
               </div>
-
               <GrowthCard data={metrics.growth} />
             </div>
           )}
 
-          {/* Document Intake Tab */}
-          {activeTab === 'documents' && (
+          {activeTab === 'bookkeeping' && (
             <div className="space-y-6">
               <div>
-                <h2 className="text-2xl font-light tracking-tight mb-2">Document Intake Engine</h2>
-                <p className="text-muted-foreground text-sm">
-                  Upload financial documents for automatic analysis and categorization
-                </p>
+                <h2 className="text-3xl font-light tracking-tight mb-2">Bookkeeping Department</h2>
+                <p className="text-muted-foreground">Accounting records, ledgers, and journal entries</p>
               </div>
-              <DocumentIntake documents={documents} />
+              <BookkeepingDepartment />
             </div>
           )}
 
-          {/* Multi-Engine Analysis Tab */}
-          {activeTab === 'engines' && (
+          {activeTab === 'tax' && (
             <div className="space-y-6">
               <div>
-                <h2 className="text-2xl font-light tracking-tight mb-2">Multi-Engine Analysis</h2>
-                <p className="text-muted-foreground text-sm">
-                  Comprehensive financial analysis from 8 specialized AI engines
-                </p>
+                <h2 className="text-3xl font-light tracking-tight mb-2">Tax Planning & Strategy</h2>
+                <p className="text-muted-foreground">GST, Income Tax, TDS calculations and filings</p>
               </div>
-              <MultiEnginePanel report={report} />
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="p-6 border border-border rounded-lg bg-card">
+                  <p className="text-sm font-semibold text-muted-foreground mb-2">GST Liability</p>
+                  <p className="text-2xl font-light">₹45,230</p>
+                  <p className="text-xs text-primary mt-2">↑ 12% vs last month</p>
+                </div>
+                <div className="p-6 border border-border rounded-lg bg-card">
+                  <p className="text-sm font-semibold text-muted-foreground mb-2">Tax Position</p>
+                  <p className="text-2xl font-light">₹3,82,100</p>
+                  <p className="text-xs text-muted-foreground mt-2">Current financial year</p>
+                </div>
+                <div className="p-6 border border-border rounded-lg bg-card">
+                  <p className="text-sm font-semibold text-muted-foreground mb-2">TDS Collected</p>
+                  <p className="text-2xl font-light">₹28,450</p>
+                  <p className="text-xs text-muted-foreground mt-2">Amount pending</p>
+                </div>
+              </div>
+              <div className="p-6 border border-border rounded-lg bg-card">
+                <h3 className="font-semibold mb-4">Tax Recommendations</h3>
+                <ul className="space-y-3 text-sm">
+                  <li className="flex items-start gap-3">
+                    <span className="text-primary font-bold">•</span>
+                    <span>Review GST returns for potential input credits optimization</span>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <span className="text-primary font-bold">•</span>
+                    <span>Consider TDS provisions before year-end to minimize liabilities</span>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <span className="text-primary font-bold">•</span>
+                    <span>Implement income splitting strategy for better tax efficiency</span>
+                  </li>
+                </ul>
+              </div>
             </div>
           )}
 
-          {/* Reporting Tab */}
-          {activeTab === 'reporting' && (
+          {activeTab === 'compliance' && (
             <div className="space-y-6">
               <div>
-                <h2 className="text-2xl font-light tracking-tight mb-2">Reports & Export</h2>
-                <p className="text-muted-foreground text-sm">
-                  Generate comprehensive financial reports and export your data
-                </p>
+                <h2 className="text-3xl font-light tracking-tight mb-2">Compliance Management</h2>
+                <p className="text-muted-foreground">Filing deadlines, regulatory requirements, and penalties</p>
               </div>
-              <ReportingPanel />
+              <ComplianceDepartment />
             </div>
           )}
 
-          {/* AI Consultation Tab */}
-          {activeTab === 'consultation' && (
+          {activeTab === 'audit' && (
             <div className="space-y-6">
               <div>
-                <h2 className="text-2xl font-light tracking-tight mb-2">AI Financial Advisor</h2>
-                <p className="text-muted-foreground text-sm">
-                  Ask questions about your finances, taxes, and growth strategies
-                </p>
+                <h2 className="text-3xl font-light tracking-tight mb-2">Audit & Verification</h2>
+                <p className="text-muted-foreground">Financial record validation and fraud detection</p>
+              </div>
+              <AuditDepartment />
+            </div>
+          )}
+
+          {activeTab === 'risk' && (
+            <div className="space-y-6">
+              <div>
+                <h2 className="text-3xl font-light tracking-tight mb-2">Risk Analysis</h2>
+                <p className="text-muted-foreground">Comprehensive risk assessment across all operations</p>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="p-6 border border-border rounded-lg bg-card">
+                  <p className="text-sm font-semibold text-muted-foreground mb-2">Cash Risk</p>
+                  <p className="text-2xl font-light text-yellow-600">Medium</p>
+                  <p className="text-xs text-muted-foreground mt-2">Days cash on hand: 45</p>
+                </div>
+                <div className="p-6 border border-border rounded-lg bg-card">
+                  <p className="text-sm font-semibold text-muted-foreground mb-2">Tax Risk</p>
+                  <p className="text-2xl font-light text-green-600">Low</p>
+                  <p className="text-xs text-muted-foreground mt-2">Compliance score: 95%</p>
+                </div>
+                <div className="p-6 border border-border rounded-lg bg-card">
+                  <p className="text-sm font-semibold text-muted-foreground mb-2">Vendor Risk</p>
+                  <p className="text-2xl font-light text-yellow-600">Medium</p>
+                  <p className="text-xs text-muted-foreground mt-2">3 vendors at risk</p>
+                </div>
+                <div className="p-6 border border-border rounded-lg bg-card">
+                  <p className="text-sm font-semibold text-muted-foreground mb-2">Customer Risk</p>
+                  <p className="text-2xl font-light text-yellow-600">Medium</p>
+                  <p className="text-xs text-muted-foreground mt-2">₹12L overdue</p>
+                </div>
+                <div className="p-6 border border-border rounded-lg bg-card">
+                  <p className="text-sm font-semibold text-muted-foreground mb-2">Compliance Risk</p>
+                  <p className="text-2xl font-light text-green-600">Low</p>
+                  <p className="text-xs text-muted-foreground mt-2">All deadlines met</p>
+                </div>
+                <div className="p-6 border border-border rounded-lg bg-card">
+                  <p className="text-sm font-semibold text-muted-foreground mb-2">Overall Risk</p>
+                  <p className="text-2xl font-light">Medium</p>
+                  <p className="text-xs text-muted-foreground mt-2">Action needed: 3</p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'forecast' && (
+            <div className="space-y-6">
+              <div>
+                <h2 className="text-3xl font-light tracking-tight mb-2">Forecasting & Scenarios</h2>
+                <p className="text-muted-foreground">Revenue, cash flow, and growth projections</p>
+              </div>
+              <GrowthCard data={metrics.growth} />
+              <div className="p-6 border border-border rounded-lg bg-card">
+                <h3 className="font-semibold mb-4">30/90/180 Day Forecast</h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground mb-2">Next 30 Days</p>
+                    <p className="text-xl font-light">₹28.5L</p>
+                    <p className="text-xs text-green-600 mt-1">↑ 8% confidence</p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground mb-2">Next 90 Days</p>
+                    <p className="text-xl font-light">₹92.3L</p>
+                    <p className="text-xs text-green-600 mt-1">↑ 6% confidence</p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground mb-2">Next 180 Days</p>
+                    <p className="text-xl font-light">₹2.1Cr</p>
+                    <p className="text-xs text-yellow-600 mt-1">↑ 4% confidence</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'cfo' && (
+            <div className="space-y-6">
+              <div>
+                <h2 className="text-3xl font-light tracking-tight mb-2">CFO Intelligence & Decisions</h2>
+                <p className="text-muted-foreground">Strategic business decision recommendations</p>
+              </div>
+              <div className="space-y-6">
+                <div className="p-6 border border-border rounded-lg bg-card">
+                  <div className="flex items-start justify-between mb-4">
+                    <div>
+                      <h3 className="font-semibold">Can I hire 5 employees?</h3>
+                      <p className="text-sm text-muted-foreground mt-1">₹25L annual cost</p>
+                    </div>
+                    <span className="px-3 py-1 bg-green-100 text-green-700 rounded font-semibold text-sm">Recommended</span>
+                  </div>
+                  <div className="mt-4 space-y-3">
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">Confidence Score</p>
+                      <p className="text-2xl font-light text-primary">87%</p>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground mb-2">Reasoning</p>
+                      <ul className="text-sm space-y-1">
+                        <li>✓ Cash reserves sufficient for next 12 months</li>
+                        <li>✓ Revenue growth supporting expansion</li>
+                        <li>✓ Operational capacity requires additional headcount</li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+                <div className="p-6 border border-border rounded-lg bg-card">
+                  <div className="flex items-start justify-between mb-4">
+                    <div>
+                      <h3 className="font-semibold">Should I apply for working capital loan?</h3>
+                      <p className="text-sm text-muted-foreground mt-1">₹1Cr facility</p>
+                    </div>
+                    <span className="px-3 py-1 bg-yellow-100 text-yellow-700 rounded font-semibold text-sm">Consider</span>
+                  </div>
+                  <div className="mt-4 space-y-3">
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">Confidence Score</p>
+                      <p className="text-2xl font-light text-primary">72%</p>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground mb-2">Conditions</p>
+                      <ul className="text-sm space-y-1">
+                        <li>⚠ High debt-to-equity ratio may impact approval</li>
+                        <li>✓ Strong revenue trajectory supports repayment</li>
+                        <li>✓ Improved cash management needed</li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'advisory' && (
+            <div className="space-y-6">
+              <div>
+                <h2 className="text-3xl font-light tracking-tight mb-2">Strategic Advisory</h2>
+                <p className="text-muted-foreground">Business intelligence and growth strategies</p>
               </div>
               <AIConsultation />
             </div>
@@ -169,9 +341,8 @@ export default function Dashboard() {
         </main>
       </div>
 
-      {/* Footer */}
       <footer className="border-t border-border bg-card/50 p-6 text-center text-xs text-muted-foreground">
-        <p>Virtual CA © 2024 | Powered by AI Engines | Real-time Financial Intelligence</p>
+        <p>Virtual CA Mind OS © 2026 | AI Chartered Accountant Firm | All Departments Integrated</p>
       </footer>
     </div>
   );
