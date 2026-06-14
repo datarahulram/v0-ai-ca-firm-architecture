@@ -24,6 +24,10 @@ yarn dev
 # or
 pnpm dev
 ```
+version 3.0 
+
+https://ai-data-engine--satyamrawat6.replit.app/
+
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
